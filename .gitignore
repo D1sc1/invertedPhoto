@@ -8,6 +8,9 @@
 /assets/*.ppm
 *.log
 
+# Local test images (drop your own photos here without committing them)
+/hq720.jpg
+
 # IDE
 .idea/
 .vs/

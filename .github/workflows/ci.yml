@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-test:
+    name: Build & test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            exe: ./build/inverted_photo
+          - os: windows-latest
+            exe: ./build/Release/inverted_photo.exe
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Configure (CMake)
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Run tests (CTest round-trip)
+        run: ctest --test-dir build --build-config Release --output-on-failure
+
+      - name: Generate sample image
+        run: python scripts/make_sample.py assets/sample.ppm 256
+
+      - name: Invert sample (multithreaded, verbose logging)
+        run: ${{ matrix.exe }} assets/sample.ppm output/inverted.png --threads 8 --verbose --log logs/run-${{ matrix.os }}.log
+
+      - name: Upload artifacts (images + logs)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: inverted-photo-${{ matrix.os }}
+          path: |
+            output/
+            logs/
+            assets/sample.ppm
+          if-no-files-found: warn

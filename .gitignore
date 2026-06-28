@@ -1,0 +1,13 @@
+# Build directories
+/build/
+/cmake-build-*/
+
+# Generated images and logs
+/output/
+/logs/
+/assets/*.ppm
+*.log
+
+# IDE
+.idea/
+.vs/
